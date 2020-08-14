@@ -1,0 +1,34 @@
+#---------- Xprinter----------
+from escpos.printer import Usb
+
+# Usb ของ Xprinter
+p = Usb(0x0483, 0x070b, 0, 0x81, 0x02)
+p.text("Hello World\n")
+p.barcode('1324354657687', 'EAN13', 64, 2, '', '')
+p.cut()
+#-----------------------------
+
+
+
+
+#---------- Epson ----------
+lsusb #Check vid pid printer
+install driver tm-t82
+
+#check pid vid
+
+pip install python-escpos
+
+from escpos.printer import Usb
+
+""" Seiko Epson Corp. Receipt Printer M129 Definitions (EPSON TM-T88IV) """
+p = Usb(0x04b8,0x0202,0)
+p.text("Hello World\n")
+p.image("logo.gif")
+p.barcode('1324354657687','EAN13',64,2,'','')
+p.cut()
+
+#ลง Font
+THSarabunNew.ttf
+
+#---------------------------
