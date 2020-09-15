@@ -12,7 +12,38 @@ import os
 from datetime import datetime
 #-----------------------------
 
+#---------- Path ----------
+datePath =  'logs/date.txt'
+configsPath = 'configs/config.txt'
+#--------------------------
+
 fontName = 'configs/THSarabunNew.ttf'
+
+#---------- USB ----------
+def objUSB(): # 2020 09 04
+    return Usb(0x0483, 0x070b, 0, 0x81, 0x02)
+#-------------------------
+
+#---------- Print Test ----------
+now = datetime.now()
+try:
+    #Printer = Usb(0x0483, 0x070b, 0, 0x81, 0x02)
+    Printer = objUSB() # 2020 09 04
+    Printer.set("CENTER", "A", "", 1, 1)
+    
+    f = open('logs/date.txt', 'r')
+    temp = f.read().split(',') # Split date and Queue
+    nowQueue = temp[1] #1
+    f.close()
+
+    Printer.text("Printer is ready\n")
+    Printer.text("Now Queue : " + nowQueue + "\n")
+    Printer.text(str(now.strftime("%d/%m/")) + str(int(now.strftime("%Y"))+543) + str(now.strftime(" %H:%M:%S")))
+    Printer.cut()
+    del Printer
+except:
+    print('Please turn on printer')
+#--------------------------------
 
 def printQueue(queue):
     reload(sys)  # Reload is a hack
@@ -79,8 +110,8 @@ def printQueue(queue):
         print('found config.txt')
         f = open('configs/config.txt', 'r')
         for row in f:
-            tempContent = row.replace('\n', '')
-            tempContent = tempContent.replace('\r', '')
+            tempContent = row.replace('\\r', '')
+            tempContent = tempContent.replace('\\n', '')
             content.append(tempContent.decode('unicode-escape'))
             #tempContent.decode('unicode-escape')
             #print('Content in file : ' + tempContent.decode('unicode-escape'))
@@ -93,17 +124,17 @@ def printQueue(queue):
         f.write('\u0e2a\u0e48\u0e27\u0e19\u0e41\u0e22\u0e01')
         f.close()
 
-    print('array : ' ,len(content))
+    print('Array length : ' ,len(content))
+    
     H = 10
+    
     for row in content:
-        font = ImageFont.truetype(fontName, 40)
-        print(row)
+        font = ImageFont.truetype(fontName, 35)
         tempH = font.getsize(row)
-        print('H : ', H)
         H = H + tempH[1] + 10
         print(font.getsize(row))
 
-
+    #time.sleep(2)
 
     #---------------------------------
 
@@ -219,34 +250,33 @@ def printQueue(queue):
     image.save('static/images/queue.png')
 
     try:
-        p = Usb(0x0483, 0x070b, 0, 0x81, 0x02)
-        p.set("CENTER", "A", "", 1, 1)
-        p.image(image)
-        #p.image("name.png")
-        p.cut()
+        #Printer = Usb(0x04b8,0x0e11,0)
+        #Printer = Usb(0x0483, 0x070b, 0, 0x81, 0x02)
+        Printer = objUSB() # 2020 09 04
+        Printer.set("CENTER", "A", "", 1, 1)
+        Printer.image(image)
+        #Printer.image("name.png")
+        Printer.cut()
+        del Printer
     except:
         print('Please turn on printer')
+
+    #time.sleep(5)
+        
 #------------------------
 
+#---------- Config Port ----------
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(27,GPIO.OUT)
-#GPIO.setup(17,GPIO.IN)
-#GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#GPIO.setup(27,GPIO.OUT)
 GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-
-#--------- Printslip ----------
-#def printSlip(queue):
-    
-#------------------------------
-
+#---------------------------------
 
 # datetime object containing current date and time
 now = datetime.now()
 print("Date now : " , now)
 
-# dd/mm/YY H:M:S
+#dd/mm/YY H:M:S
 #date = now.strftime("%d/%m/%Y %H:%M:%S")
 date = now.strftime("%Y%m%d")
 print("Date : " + date)
@@ -269,98 +299,123 @@ for file in os.listdir(path):
 
 if fileState == 1:
     print('Found date.txt')
-    f = open('logs/date.txt', 'r')
     
+    f = open('logs/date.txt', 'r')
     temp = f.read().split(',') # Split date and Queue
     oldDate = temp[0]
     oldQueue = temp[1]
 
+    f.close()
+
     print('Found date.txt')
     print('Date : ' + oldDate + ', Queue : ' + oldQueue)
+    
     if int(oldDate) < int(date): # if date in file < now date = create file
         print('Intens date and Clear queue')
         f = open('logs/date.txt', 'w')
         f.write(date + ',' + '0' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+        f.close()
         
         print('Create logs file')
         f = open(str(now.strftime("%Y%m%d")) + '.txt', 'w')
         f.write( '1' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+        f.close()
     else:
         print('Load queue')
         queue = int(oldQueue)
-    f.close()
 else:
     print('Cant\'n found date.txt')
     print('Create ' + date + ' > date.txt ')
     f = open('logs/date.txt', 'w')
     f.write(date + ',' + '0' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+    f.close()
     
     print('Create logs file')
     f = open(str(now.strftime("%Y%m%d")) + '.txt', 'w')
-    f.write( '0' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+    f.close()
+    f.write( '1' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
 
     f.close()
 #--------------------------------
 
+# 2020 09 04
+"""
 if backupdate != date:
     print('Clear Queue!!')
     queue = 0
     backupdate = datetime
-    
+"""
 
 while True:
     now = datetime.now()
+    date = now.strftime("%Y%m%d") # 2020 09 04
     
-    print('PID : ', os.getpid())
-    print('Datetime : ' , str(now.strftime("%Y/%m/%d %H:%M:%S")))
+    print('PID of program : ', os.getpid())
+    print('Timestamp : ' , str(now.strftime("%Y/%m/%d %H:%M:%S")))
     print('Queue : ' + str(queue))
-    if GPIO.input(17) == 1:
-        GPIO.output(27,1)
-    else:
-        GPIO.output(27,0)
-    
-    #Button
+
+
+    #---------- Button ----------
     if GPIO.input(17) == 1 and btnState == 0 :
         btnState = 1
         print('Waiting for active')
     elif GPIO.input(17) == 0 and btnState == 1:
         btnState = 0
-        queue = queue + 1
+        #queue = queue + 1
 
         f = open('logs/date.txt', 'r')
         temp = f.read().split(',') # Split date and Queue
         
-        oldDate = temp[0]
-        oldQueue = temp[1]
-
-        printQueue(str(queue))
-        
-        # Check old date and clear
-        if int(oldDate) < int(date):
-            print('Intens date and Clear queue')
-            f = open('logs/date.txt', 'w')
-            f.write(date + ',' + '0' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
-            
-            print('Create logs file')
-            logsfile = 'logs/' + str(now.strftime("%Y%m%d")) + '.txt'
-            f = open(logsfile , 'w')
-            f.write( '0' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
-
-        else:
-            print('Queue saved')
-            f = open('logs/date.txt', 'w')
-            f.write(date + ',' + str(queue) + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
-            
-            logsfile = 'logs/' + str(now.strftime("%Y%m%d")) + '.txt'
-            f = open(logsfile, 'a')
-            f.write( '\n' + str(queue) + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+        oldDate = temp[0] #YYYYMMDD 20200909
+        oldQueue = temp[1] #1
 
         f.close()
-        
-        print('Active Printer')
-        
-        #GPIO.output(27,1)
-        #time.sleep(0.5)
-        #GPIO.output(27,0)
-        #time.sleep(0.5)
+
+        try:
+            #---------- Check Printer ----------
+            Printer = objUSB()
+            print('Status printer : Actived')
+            #-----------------------------------
+
+            #---------- Check date and clear ----------
+            if int(oldDate) < int(date):
+                print('Intens date and Clear queue')
+                f = open('logs/date.txt', 'w')
+                f.write(date + ',' + '1' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+                f.close()
+                
+                print('Create logs file')
+                logsfile = 'logs/' + str(now.strftime("%Y%m%d")) + '.txt'
+                f = open(logsfile , 'w')
+                f.write( '1' + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+                f.close()
+
+                queue = 1
+
+            else:
+                print('Queue saved')
+                queue = queue + 1
+                f = open('logs/date.txt', 'w')
+                f.write(date + ',' + str(queue) + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+                f.close()
+                
+                logsfile = 'logs/' + str(now.strftime("%Y%m%d")) + '.txt'
+                f = open(logsfile, 'a')
+                f.write( '\n' + str(queue) + ',' + str(now.strftime("%Y/%m/%d %H:%M:%S")))
+
+                f.close()
+            #------------------------------------------
+            del Printer
+            print('Active Printer')
+            printQueue(str(queue))
+        except:
+            print('Status printer : Indctive')
+        #----------------------------
+    
 
